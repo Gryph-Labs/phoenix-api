@@ -1,3 +1,9 @@
 spring:
   application:
     name: phoenix-api
+
+app:
+  version: ${projectVersion}
+
+server:
+  port: 8081
