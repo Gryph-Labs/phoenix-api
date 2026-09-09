@@ -1,4 +1,4 @@
-package com.gryphlabs.phoenix.api.deletgate;
+package com.gryphlabs.phoenix.api.delegate;
 
 import com.gryphlabs.phoenix.api.generated.api.SystemApiDelegate;
 import com.gryphlabs.phoenix.api.generated.model.StatusResponse;
