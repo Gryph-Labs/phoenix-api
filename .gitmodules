@@ -1,0 +1,3 @@
+[submodule "src/main/resources/spec"]
+	path = src/main/resources/spec
+	url = https://github.com/Gryph-Labs/phoenix-api-spec.git
