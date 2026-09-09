@@ -46,7 +46,7 @@ dependencies {
 openApiGenerate {
     generatorName = 'spring'
     inputSpec = "$rootDir/src/main/resources/spec/phoenix-api-spec.yaml"
-    outputDir = "$buildDir/generated/openapi"
+    outputDir = layout.buildDirectory.dir("generated/openapi").get().asFile.absolutePath
 
     apiPackage = 'com.gryphlabs.phoenix.api.generated.api'
     modelPackage = 'com.gryphlabs.phoenix.api.generated.model'
@@ -66,7 +66,7 @@ openApiGenerate {
 sourceSets {
     main {
         java {
-            srcDir "$buildDir/generated/openapi/src/main/java"
+            srcDir layout.buildDirectory.dir("generated/openapi/src/main/java")
         }
     }
 }
