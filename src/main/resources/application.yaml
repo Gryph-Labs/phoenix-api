@@ -3,7 +3,14 @@ spring:
     name: phoenix-api
 
 app:
-  version: ${projectVersion}
+  version: @projectVersion@
+
+  security:
+    jwt:
+      secret: ${PHOENIX_JWT_SECRET}
+      access-token-expiration: 15m
+      refresh-token-expiration: 7d
+      remember-me-refresh-token-expiration: 30d
 
 server:
   port: 8081

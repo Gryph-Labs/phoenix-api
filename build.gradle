@@ -1,3 +1,6 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
+
 plugins {
     id "java"
     id "org.springframework.boot" version "4.1.1"
@@ -8,6 +11,10 @@ plugins {
 group = "com.gryphlabs"
 version = "0.0.1-SNAPSHOT"
 description = "phoenix-api"
+
+ext {
+    jsonwebtokenVersion = '0.13.0'
+}
 
 java {
     toolchain {
@@ -23,62 +30,127 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-actuator"
     implementation "org.springframework.boot:spring-boot-starter-validation"
     implementation "org.springframework.boot:spring-boot-starter-webmvc"
+
     developmentOnly "org.springframework.boot:spring-boot-devtools"
+
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
 
+    // Security
+    implementation "org.springframework.boot:spring-boot-starter-security"
+
+    // Database
+    implementation "org.springframework.boot:spring-boot-starter-data-jpa"
+    runtimeOnly "org.postgresql:postgresql"
+    runtimeOnly "com.h2database:h2"
+
+    // JWT - jsonwebtoken
+    implementation "io.jsonwebtoken:jjwt-api:${jsonwebtokenVersion}"
+    runtimeOnly "io.jsonwebtoken:jjwt-impl:${jsonwebtokenVersion}"
+    runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jsonwebtokenVersion}"
+
+    // Metrics
     runtimeOnly "io.micrometer:micrometer-registry-prometheus"
 
+    // Lombok
     compileOnly "org.projectlombok:lombok"
     annotationProcessor "org.projectlombok:lombok"
 
+    testCompileOnly "org.projectlombok:lombok"
+    testAnnotationProcessor "org.projectlombok:lombok"
+
+    // Jackson
     implementation "com.fasterxml.jackson.core:jackson-databind"
 
+    // Tests
+    testImplementation "org.springframework.security:spring-security-test"
     testImplementation "org.springframework.boot:spring-boot-starter-actuator-test"
     testImplementation "org.springframework.boot:spring-boot-starter-validation-test"
     testImplementation "org.springframework.boot:spring-boot-starter-webmvc-test"
 
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
-
-    testCompileOnly "org.projectlombok:lombok"
-    testAnnotationProcessor "org.projectlombok:lombok"
 }
 
 openApiGenerate {
-    generatorName = 'spring'
-    inputSpec = "$rootDir/src/main/resources/spec/phoenix-api-spec.yaml"
-    outputDir = layout.buildDirectory.dir("generated/openapi").get().asFile.absolutePath
+    generatorName = "spring"
+    inputSpec = "$rootDir/src/main/resources/spec/phoenix-api-spec/phoenix-api-spec.yaml"
+    outputDir = layout.buildDirectory
+            .dir("generated/phoenix-api-spec")
+            .get()
+            .asFile
+            .absolutePath
 
-    apiPackage = 'com.gryphlabs.phoenix.api.generated.api'
-    modelPackage = 'com.gryphlabs.phoenix.api.generated.model'
+    apiPackage = "com.gryphlabs.phoenix.api.generated.api"
+    modelPackage = "com.gryphlabs.phoenix.api.generated.model"
+    invokerPackage = "com.gryphlabs.phoenix.api.generated"
+
+    globalProperties = [
+            apis           : "",
+            models         : "",
+            supportingFiles: "ApiUtil.java"
+    ]
 
     configOptions = [
-            delegatePattern      : 'true',
-            interfaceOnly        : 'false',
-            useSpringBoot4       : 'true',
-            useJakartaEe         : 'true',
-            useTags              : 'true',
-            openApiNullable      : 'false',
-            documentationProvider: 'none',
-            annotationLibrary    : 'none'
+            delegatePattern      : "true",
+            interfaceOnly        : "false",
+            useSpringBoot4       : "true",
+            useJakartaEe         : "true",
+            useTags              : "true",
+            openApiNullable      : "false",
+            documentationProvider: "none",
+            annotationLibrary    : "none",
+            useSpringController  : "false"
+    ]
+}
+
+tasks.register("openApiGenerateAuth", GenerateTask) {
+    generatorName = "spring"
+    inputSpec = "$rootDir/src/main/resources/spec/auth-spec/gryph-auth-spec.yaml"
+    outputDir = layout.buildDirectory
+            .dir("generated/gryph-auth-spec")
+            .get()
+            .asFile
+            .absolutePath
+
+    apiPackage = "com.gryphlabs.phoenix.api.generated.auth.api"
+    modelPackage = "com.gryphlabs.phoenix.api.generated.auth.model"
+    invokerPackage = "com.gryphlabs.phoenix.api.generated.auth"
+
+    configOptions = [
+            delegatePattern      : "true",
+            interfaceOnly        : "true",
+            useSpringBoot4       : "true",
+            useJakartaEe         : "true",
+            useTags              : "true",
+            openApiNullable      : "false",
+            documentationProvider: "none",
+            annotationLibrary    : "none",
+            useSpringController  : "false"
     ]
 }
 
 sourceSets {
     main {
         java {
-            srcDir layout.buildDirectory.dir("generated/openapi/src/main/java")
+            srcDir layout.buildDirectory.dir("generated/phoenix-api-spec/src/main/java")
+            srcDir layout.buildDirectory.dir("generated/gryph-auth-spec/src/main/java")
         }
     }
 }
 
 processResources {
-    filesMatching('application.yaml') {
-        expand(projectVersion: project.version)
+    filesMatching("application.yaml") {
+        filter(
+                ReplaceTokens,
+                tokens: [
+                        projectVersion: project.version.toString()
+                ]
+        )
     }
 }
 
-tasks.named('compileJava') {
-    dependsOn tasks.named('openApiGenerate')
+tasks.named("compileJava") {
+    dependsOn tasks.named("openApiGenerate")
+    dependsOn tasks.named("openApiGenerateAuth")
 }
 
 tasks.named("test") {

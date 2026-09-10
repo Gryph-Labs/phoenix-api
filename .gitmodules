@@ -1,3 +1,8 @@
-[submodule "src/main/resources/spec"]
-	path = src/main/resources/spec
+[submodule "phoenix-api-spec"]
+	path = src/main/resources/spec/phoenix-api-spec
 	url = https://github.com/Gryph-Labs/phoenix-api-spec.git
+	branch = v1
+[submodule "auth-spec"]
+	path = src/main/resources/spec/auth-spec
+	url = https://github.com/Gryph-Labs/gryph-auth-spec.git
+	branch = v1
