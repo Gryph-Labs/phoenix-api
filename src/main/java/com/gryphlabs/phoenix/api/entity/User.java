@@ -38,6 +38,10 @@ public class User extends AuditableEntity implements UserDetails {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @NotBlank(message = "Display name is required.")
+    @Column(nullable = false)
+    private String displayName;
+
     @Size(min = 7, message = "Password is weak.")
     @NotBlank(message = "Password is required.")
     @Column(nullable = false)
@@ -47,14 +51,27 @@ public class User extends AuditableEntity implements UserDetails {
     @Column(nullable = false)
     private Role role;
 
-    private boolean enabled;
-    private boolean accountNonExpired;
-    private boolean accountNonLocked;
-    private boolean credentialsNonExpired;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserStatus status;
+
+    @Column(nullable = false)
+    private boolean accountNonExpired = true;
+
+    @Column(nullable = false)
+    private boolean accountNonLocked = true;
+
+    @Column(nullable = false)
+    private boolean credentialsNonExpired = true;
 
     @Override
     public String getUsername() {
         return getEmail();
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return UserStatus.ACTIVE == status;
     }
 
     @Override

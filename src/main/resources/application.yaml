@@ -2,6 +2,19 @@ spring:
   application:
     name: phoenix-api
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${PHOENIX_MAIL_USERNAME}
+    password: ${PHOENIX_MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
 app:
   version: @projectVersion@
 
@@ -11,6 +24,18 @@ app:
       access-token-expiration: 15m
       refresh-token-expiration: 7d
       remember-me-refresh-token-expiration: 30d
+    password:
+      encoder:
+        strength: 13
+      min-length: 12
+      uppercase: 1
+      lowercase: 1
+      numbers: 1
+      special: 1
+      special-characters: "!@#$%^&*()_+-=[]{}"
+    registration:
+      verification-token-expiration: 24h
+      verification-url: http://localhost:8081/auth/register/confirm?token={token}
 
 server:
   port: 8081

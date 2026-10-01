@@ -8,13 +8,3 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
-
-app:
-  security:
-    password:
-      min-length: 8
-      uppercase: 1
-      lowercase: 1
-      numbers: 1
-      special: 0
-      special-characters: "!@#$%^&*()_+-=[]{}"

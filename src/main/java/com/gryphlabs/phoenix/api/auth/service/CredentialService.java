@@ -3,8 +3,11 @@ package com.gryphlabs.phoenix.api.auth.service;
 import com.gryphlabs.phoenix.api.auth.dto.Credentials;
 import com.gryphlabs.phoenix.api.auth.validation.PasswordValidator;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -17,7 +20,7 @@ public class CredentialService {
         return new Credentials(normalizeEmail(email), passwordEncoder.encode(password));
     }
 
-    private String normalizeEmail(String email) {
-        return email.trim().toLowerCase();
+    public String normalizeEmail(@NonNull String email) {
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 }

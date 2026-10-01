@@ -30,6 +30,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-actuator"
     implementation "org.springframework.boot:spring-boot-starter-validation"
     implementation "org.springframework.boot:spring-boot-starter-webmvc"
+    implementation "org.springframework.boot:spring-boot-starter-mail"
 
     developmentOnly "org.springframework.boot:spring-boot-devtools"
 
@@ -66,6 +67,7 @@ dependencies {
     testImplementation "org.springframework.boot:spring-boot-starter-actuator-test"
     testImplementation "org.springframework.boot:spring-boot-starter-validation-test"
     testImplementation "org.springframework.boot:spring-boot-starter-webmvc-test"
+    testImplementation "org.mockito:mockito-junit-jupiter"
 
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
