@@ -1,0 +1,11 @@
+spring:
+  datasource:
+    url: ${PHOENIX_DB_URL}
+    username: ${PHOENIX_DB_USERNAME}
+    password: ${PHOENIX_DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
