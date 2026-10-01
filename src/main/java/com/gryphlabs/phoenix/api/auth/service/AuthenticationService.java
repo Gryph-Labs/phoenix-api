@@ -176,7 +176,7 @@ public class AuthenticationService {
         }
         if (userRepository.findByEmail(newEmail)
                 .filter(other ->
-                        !other.getId().equals(user.getId()) && other.getStatus() == UserStatus.ACTIVE)
+                        !other.getId().equals(user.getId()))
                 .isPresent()) {
             throw new EmailAlreadyExistsException();
         }
@@ -196,8 +196,7 @@ public class AuthenticationService {
                 .orElseThrow(InvalidEmailChangeException::new);
         if (userRepository.findByEmail(token.getProposedEmail())
                 .filter(other ->
-                        !other.getId().equals(token.getUser().getId()) &&
-                                other.getStatus() == UserStatus.ACTIVE)
+                        !other.getId().equals(token.getUser().getId()))
                 .isPresent()) {
             throw new EmailAlreadyExistsException();
         }

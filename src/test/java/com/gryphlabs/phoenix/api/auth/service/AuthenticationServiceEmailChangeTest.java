@@ -117,6 +117,23 @@ class AuthenticationServiceEmailChangeTest {
     }
 
     @Test
+    void requestRejectsEmailOwnedByDisabledUser() {
+        var u = user(1, "old@example.com");
+        authenticate("1", "user");
+        when(users.findById(1L)).thenReturn(Optional.of(u));
+        when(credentials.normalizeEmail(anyString())).thenReturn("disabled@example.com");
+        when(encoder.matches("current", "hash")).thenReturn(true);
+        var disabledOwner = user(2, "disabled@example.com");
+        disabledOwner.setStatus(UserStatus.DISABLED);
+        when(users.findByEmail("disabled@example.com")).thenReturn(Optional.of(disabledOwner));
+
+        assertThrows(EmailAlreadyExistsException.class,
+                () -> service.requestEmailChange(new EmailChangeRequest("disabled@example.com", "current")));
+        verify(tokens, never()).issue(any(), any(), any());
+        verify(email, never()).sendEmailChangeEmail(any(), any(), any());
+    }
+
+    @Test
     void confirmationUsesPersistedEmailConsumesTokenRevokesOnlyUsersSessionsAndRejectsReuseOrTakenEmail() {
         var u = user(1, "old@example.com");
         var t = new EmailChangeToken();
@@ -141,7 +158,28 @@ class AuthenticationServiceEmailChangeTest {
         when(users.findByEmail("taken@example.com")).thenReturn(Optional.of(other));
         assertThrows(EmailAlreadyExistsException.class, () -> service.confirmEmailChange(new EmailChangeConfirmRequest("taken")));
         assertEquals("other@example.com", u2.getEmail());
+        assertFalse(taken.isConsumed());
         verify(users, never()).save(u2);
+    }
+
+    @Test
+    void confirmationRejectsEmailOwnedByDisabledUserWithoutChangingState() {
+        var changingUser = user(1, "old@example.com");
+        var token = new EmailChangeToken();
+        token.setUser(changingUser);
+        token.setProposedEmail("disabled@example.com");
+        token.setExpiresAt(Instant.now().plusSeconds(60));
+        var disabledOwner = user(2, "disabled@example.com");
+        disabledOwner.setStatus(UserStatus.DISABLED);
+        when(tokens.find("raw")).thenReturn(Optional.of(token));
+        when(users.findByEmail("disabled@example.com")).thenReturn(Optional.of(disabledOwner));
+
+        assertThrows(EmailAlreadyExistsException.class,
+                () -> service.confirmEmailChange(new EmailChangeConfirmRequest("raw")));
+        assertEquals("old@example.com", changingUser.getEmail());
+        assertFalse(token.isConsumed());
+        verify(users, never()).save(any(User.class));
+        verify(refresh, never()).revokeUser(anyLong());
     }
 
     @Test
