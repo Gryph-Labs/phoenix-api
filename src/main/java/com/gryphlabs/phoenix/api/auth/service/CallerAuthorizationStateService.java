@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class CallerAuthorizationStateService {
@@ -100,24 +101,28 @@ public class CallerAuthorizationStateService {
         if (client.isRevoked()) {
             return AuthorizationState.denied("caller_revoked");
         }
-        return AuthorizationState.authorized();
+        return AuthorizationState.authorized(client.getAuthorities());
     }
 
     private AuthorizationState record(String reason) {
-        return "allowed".equals(reason) ? AuthorizationState.authorized() : AuthorizationState.denied(reason);
+        var parts = reason.split("\\|", -1);
+        if ("allowed".equals(parts[0])) {
+            return AuthorizationState.authorized(parts.length == 1 ? Set.of() : Set.of(parts[1].split(",")));
+        }
+        return AuthorizationState.denied(parts[0]);
     }
 
     private String key(long callerId) {
         return KEY_PREFIX + callerId;
     }
 
-    public record AuthorizationState(boolean allowed, String reason) {
-        static AuthorizationState authorized() {
-            return new AuthorizationState(true, "allowed");
+    public record AuthorizationState(boolean allowed, String reason, Set<String> authorities) {
+        static AuthorizationState authorized(Set<String> authorities) {
+            return new AuthorizationState(true, "allowed|" + String.join(",", authorities), Set.copyOf(authorities));
         }
 
         static AuthorizationState denied(String reason) {
-            return new AuthorizationState(false, reason);
+            return new AuthorizationState(false, reason, Set.of());
         }
     }
 }

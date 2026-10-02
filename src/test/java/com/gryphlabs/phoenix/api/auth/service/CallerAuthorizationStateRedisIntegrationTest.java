@@ -43,7 +43,7 @@ class CallerAuthorizationStateRedisIntegrationTest {
         var service = new CallerAuthorizationStateService(repository, template, Duration.ofSeconds(30), metrics);
 
         assertTrue(service.resolve(7L).allowed());
-        assertEquals("allowed", template.opsForValue().get("phoenix:auth:caller:7"));
+        org.junit.jupiter.api.Assertions.assertTrue(template.opsForValue().get("phoenix:auth:caller:7").startsWith("allowed|"));
         assertTrue(service.resolve(7L).allowed());
         verify(repository, times(1)).findWithOwnerById(7L);
         assertEquals(1.0, registry.get("phoenix.auth.cache.miss").counter().count());

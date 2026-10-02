@@ -60,13 +60,17 @@ public class JwtBearerAuthenticationFilter extends OncePerRequestFilter {
                 var auth = new UsernamePasswordAuthenticationToken(claims.getSubject(), actor, authorities);
                 if ("service".equals(actor)) {
                     var ownerId = claims.get("ownerId", String.class);
-                    if (ownerId == null || callerAuthorizationStateService == null || !callerAuthorizationStateService.resolve(Long.parseLong(claims.getSubject())).allowed()) {
+                    var state = ownerId == null || callerAuthorizationStateService == null
+                            ? null : callerAuthorizationStateService.resolve(Long.parseLong(claims.getSubject()));
+                    if (state == null || !state.allowed()) {
                         if (metrics != null) {
                             metrics.count("authorization.denied", "caller_not_authorized");
                         }
                         response.sendError(401);
                         return;
                     }
+                    authorities = state.authorities().stream().map(SimpleGrantedAuthority::new).toList();
+                    auth = new UsernamePasswordAuthenticationToken(claims.getSubject(), actor, authorities);
                     if (metrics != null) {
                         metrics.count("authorization.allowed");
                     }
