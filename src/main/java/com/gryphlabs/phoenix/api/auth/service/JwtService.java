@@ -6,6 +6,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.jspecify.annotations.NonNull;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
@@ -20,14 +21,22 @@ import java.util.Date;
 public class JwtService {
     private final SecretKey key;
     private final Duration accessLifetime;
+    private final Duration serviceAccessLifetime;
     private final Clock clock;
 
+    @Autowired
     public JwtService(@Value("${app.security.jwt.secret}") @NonNull String secret,
                       @Value("${app.security.jwt.access-token-expiration}") Duration accessLifetime,
+                      @Value("${app.security.jwt.service-access-token-expiration:1h}") Duration serviceAccessLifetime,
                       Clock clock) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.accessLifetime = accessLifetime;
+        this.serviceAccessLifetime = serviceAccessLifetime;
         this.clock = clock;
+    }
+
+    public JwtService(String secret, Duration accessLifetime, Clock clock) {
+        this(secret, accessLifetime, Duration.ofHours(1), clock);
     }
 
     public String createAccessToken(@NonNull User user) {
@@ -36,18 +45,26 @@ public class JwtService {
                 "user",
                 user.getAuthorities().stream()
                         .map(GrantedAuthority::getAuthority)
-                        .toList());
+                        .toList(), accessLifetime);
     }
 
     public String createAccessToken(@NonNull ServiceClient client) {
-        return createAccessToken(client.getId().toString(), "service", client.getAuthorities());
+        return createAccessToken(client.getId().toString(), client.getOwner().getId().toString(), "service", client.getAuthorities(), serviceAccessLifetime);
     }
 
-    private String createAccessToken(String subject, String actor, java.util.Collection<String> authorities) {
+    private String createAccessToken(String subject, String actor, java.util.Collection<String> authorities, Duration lifetime) {
+        return createAccessToken(subject, null, actor, authorities, lifetime);
+    }
+
+    private String createAccessToken(String subject, String ownerId, String actor, java.util.Collection<String> authorities, Duration lifetime) {
         var now = clock.instant();
-        return Jwts.builder().subject(subject).claim("actor", actor)
+        var builder = Jwts.builder().subject(subject).claim("actor", actor);
+        if (ownerId != null) {
+            builder.claim("ownerId", ownerId);
+        }
+        return builder
                 .claim("authorities", authorities)
-                .issuedAt(Date.from(now)).expiration(Date.from(now.plus(accessLifetime)))
+                .issuedAt(Date.from(now)).expiration(Date.from(now.plus(lifetime)))
                 .signWith(key).compact();
     }
 
@@ -62,5 +79,9 @@ public class JwtService {
 
     public Duration accessLifetime() {
         return accessLifetime;
+    }
+
+    public Duration serviceAccessLifetime() {
+        return serviceAccessLifetime;
     }
 }

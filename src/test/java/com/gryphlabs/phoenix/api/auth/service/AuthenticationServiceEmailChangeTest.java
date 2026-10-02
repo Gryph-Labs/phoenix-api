@@ -1,14 +1,25 @@
 package com.gryphlabs.phoenix.api.auth.service;
 
-import com.gryphlabs.phoenix.api.auth.exception.*;
+import com.gryphlabs.phoenix.api.auth.exception.EmailAlreadyExistsException;
+import com.gryphlabs.phoenix.api.auth.exception.InvalidEmailChangeException;
 import com.gryphlabs.phoenix.api.auth.validation.PasswordValidator;
-import com.gryphlabs.phoenix.api.entity.*;
-import com.gryphlabs.phoenix.api.generated.auth.model.*;
-import com.gryphlabs.phoenix.api.repository.*;
-import org.junit.jupiter.api.*;
+import com.gryphlabs.phoenix.api.entity.EmailChangeToken;
+import com.gryphlabs.phoenix.api.entity.Role;
+import com.gryphlabs.phoenix.api.entity.User;
+import com.gryphlabs.phoenix.api.entity.UserStatus;
+import com.gryphlabs.phoenix.api.generated.auth.model.EmailChangeConfirmRequest;
+import com.gryphlabs.phoenix.api.generated.auth.model.EmailChangeRequest;
+import com.gryphlabs.phoenix.api.repository.PasswordActionTokenRepository;
+import com.gryphlabs.phoenix.api.repository.ServiceClientRepository;
+import com.gryphlabs.phoenix.api.repository.UserRepository;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
-import org.mockito.junit.jupiter.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
@@ -16,12 +27,23 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.time.*;
-import java.util.*;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)

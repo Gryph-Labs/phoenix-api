@@ -2,6 +2,11 @@ spring:
   application:
     name: phoenix-api
 
+  data:
+    redis:
+      host: ${PHOENIX_REDIS_HOST:localhost}
+      port: ${PHOENIX_REDIS_PORT:6379}
+
   mail:
     host: smtp.gmail.com
     port: 587
@@ -22,6 +27,7 @@ app:
     jwt:
       secret: ${PHOENIX_JWT_SECRET}
       access-token-expiration: 15m
+      service-access-token-expiration: 1h
       refresh-token-expiration: 7d
       remember-me-refresh-token-expiration: 30d
     password:
@@ -36,6 +42,8 @@ app:
     registration:
       verification-token-expiration: 24h
       verification-url: http://localhost:8081/auth/register/confirm?token={token}
+    caller-authorization:
+      cache-ttl: 5m
 
 server:
   port: 8081

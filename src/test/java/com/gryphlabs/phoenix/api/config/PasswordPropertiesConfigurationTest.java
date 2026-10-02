@@ -10,7 +10,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @SpringBootTest
 @ActiveProfiles("local")
 class PasswordPropertiesConfigurationTest {
-    @Autowired PasswordProperties properties;
+    @Autowired
+    PasswordProperties properties;
 
     @Test
     void bindsCompleteBasePasswordPolicy() {
