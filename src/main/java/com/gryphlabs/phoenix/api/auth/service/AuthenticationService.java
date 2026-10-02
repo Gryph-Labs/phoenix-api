@@ -4,9 +4,9 @@ import com.gryphlabs.phoenix.api.auth.exception.EmailAlreadyExistsException;
 import com.gryphlabs.phoenix.api.auth.exception.InvalidEmailChangeException;
 import com.gryphlabs.phoenix.api.auth.exception.InvalidVerificationTokenException;
 import com.gryphlabs.phoenix.api.auth.exception.UserAlreadyExistsException;
-import com.gryphlabs.phoenix.api.auth.mapper.UserMapper;
 import com.gryphlabs.phoenix.api.auth.mapper.MessageMapper;
 import com.gryphlabs.phoenix.api.auth.mapper.TokenMapper;
+import com.gryphlabs.phoenix.api.auth.mapper.UserMapper;
 import com.gryphlabs.phoenix.api.auth.validation.PasswordValidator;
 import com.gryphlabs.phoenix.api.entity.PasswordActionToken.Purpose;
 import com.gryphlabs.phoenix.api.entity.ServiceClient;
@@ -55,6 +55,7 @@ public class AuthenticationService {
     private final PasswordActionTokenService passwordActionTokenService;
     private final PasswordActionTokenRepository passwordActionTokenRepository;
     private final EmailChangeTokenService emailChangeTokenService;
+    private final AuthMetrics authMetrics;
 
     private final UserMapper userMapper;
     private final TokenMapper tokenMapper;
@@ -234,19 +235,39 @@ public class AuthenticationService {
                 Purpose.CHANGE);
     }
 
+    @Transactional(readOnly = true)
     public AccessTokenResponse issueServiceToken(@NonNull ServiceTokenRequest serviceTokenRequest) {
-        if (serviceTokenRequest.getGrantType() != ServiceTokenRequest.GrantTypeEnum.CLIENT_CREDENTIALS) {
-            throw new BadCredentialsException("Invalid service credentials");
+        if (authMetrics != null) {
+            authMetrics.count("service_token.request");
         }
+        var timer = authMetrics == null ? null : authMetrics.startTimer();
+        try {
+            if (serviceTokenRequest.getGrantType() != ServiceTokenRequest.GrantTypeEnum.CLIENT_CREDENTIALS) {
+                throw new BadCredentialsException("Invalid service credentials");
+            }
 
-        var client = serviceClientRepository.findByClientId(serviceTokenRequest.getClientId())
-                .filter(ServiceClient::isEnabled).filter(clientRecord -> !clientRecord.isRevoked())
-                .orElseThrow(() -> new BadCredentialsException("Invalid service credentials"));
-        if (!passwordEncoder.matches(serviceTokenRequest.getClientSecret(), client.getClientSecretHash())) {
-            throw new BadCredentialsException("Invalid service credentials");
+            var client = serviceClientRepository.findByClientId(serviceTokenRequest.getClientId())
+                    .filter(ServiceClient::isEnabled).filter(clientRecord -> !clientRecord.isRevoked())
+                    .filter(clientRecord -> clientRecord.getOwner() != null && clientRecord.getOwner().getStatus() == UserStatus.ACTIVE)
+                    .orElseThrow(() -> new BadCredentialsException("Invalid service credentials"));
+            if (!passwordEncoder.matches(serviceTokenRequest.getClientSecret(), client.getClientSecretHash())) {
+                throw new BadCredentialsException("Invalid service credentials");
+            }
+
+            if (authMetrics != null) {
+                authMetrics.count("service_token.success");
+            }
+            return tokenMapper.toAccessTokenResponse(jwtService.createAccessToken(client), jwtService.serviceAccessLifetime());
+        } catch (RuntimeException ex) {
+            if (authMetrics != null) {
+                authMetrics.count("service_token.failure");
+            }
+            throw ex;
+        } finally {
+            if (authMetrics != null) {
+                authMetrics.stop(timer, "service_token.issuance_latency");
+            }
         }
-
-        return tokenMapper.toAccessTokenResponse(jwtService.createAccessToken(client), jwtService.accessLifetime());
     }
 
     public MessageResponse requestPasswordReset(@NonNull PasswordResetRequest passwordResetRequest) {

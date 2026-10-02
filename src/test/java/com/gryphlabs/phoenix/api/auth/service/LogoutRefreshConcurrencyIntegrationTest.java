@@ -29,11 +29,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringBootTest
 @ActiveProfiles("local")
 class LogoutRefreshConcurrencyIntegrationTest {
-    @Autowired AuthenticationService authenticationService;
-    @Autowired UserRepository userRepository;
-    @Autowired RefreshTokenRepository refreshTokenRepository;
-    @Autowired PasswordEncoder passwordEncoder;
-    @Autowired TransactionTemplate transactionTemplate;
+    @Autowired
+    AuthenticationService authenticationService;
+    @Autowired
+    UserRepository userRepository;
+    @Autowired
+    RefreshTokenRepository refreshTokenRepository;
+    @Autowired
+    PasswordEncoder passwordEncoder;
+    @Autowired
+    TransactionTemplate transactionTemplate;
 
     @Test
     void logoutLeavesNoUsableTokenWhenItRacesWithRefresh() throws Exception {

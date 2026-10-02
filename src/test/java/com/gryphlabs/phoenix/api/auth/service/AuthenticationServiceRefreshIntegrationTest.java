@@ -18,9 +18,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @SpringBootTest
 @ActiveProfiles("local")
 class AuthenticationServiceRefreshIntegrationTest {
-    @Autowired AuthenticationService authenticationService;
-    @Autowired UserRepository userRepository;
-    @Autowired PasswordEncoder passwordEncoder;
+    @Autowired
+    AuthenticationService authenticationService;
+    @Autowired
+    UserRepository userRepository;
+    @Autowired
+    PasswordEncoder passwordEncoder;
 
     @Test
     void replayingRotatedTokenRevokesTheCurrentTokenFamily() {

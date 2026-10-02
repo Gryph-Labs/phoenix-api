@@ -2,8 +2,8 @@ package com.gryphlabs.phoenix.api.auth.service;
 
 import com.gryphlabs.phoenix.api.auth.exception.InvalidVerificationTokenException;
 import com.gryphlabs.phoenix.api.auth.exception.UserAlreadyExistsException;
-import com.gryphlabs.phoenix.api.auth.mapper.UserMapper;
 import com.gryphlabs.phoenix.api.auth.mapper.MessageMapper;
+import com.gryphlabs.phoenix.api.auth.mapper.UserMapper;
 import com.gryphlabs.phoenix.api.auth.validation.PasswordValidator;
 import com.gryphlabs.phoenix.api.entity.PendingRegistration;
 import com.gryphlabs.phoenix.api.entity.Role;
@@ -33,16 +33,24 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AuthenticationServiceRegistrationTest {
-    @Spy MessageMapper messageMapper = new MessageMapper();
+    @Spy
+    MessageMapper messageMapper = new MessageMapper();
     private static final String EMAIL = "person@example.com";
 
-    @Mock private CredentialService credentialService;
-    @Mock private UserRepository userRepository;
-    @Mock private PendingRegistrationService pendingRegistrationService;
-    @Mock private EmailDeliveryService emailDeliveryService;
-    @Mock private PasswordValidator passwordValidator;
-    @Mock private PasswordEncoder passwordEncoder;
-    @Mock private UserMapper userMapper;
+    @Mock
+    private CredentialService credentialService;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private PendingRegistrationService pendingRegistrationService;
+    @Mock
+    private EmailDeliveryService emailDeliveryService;
+    @Mock
+    private PasswordValidator passwordValidator;
+    @Mock
+    private PasswordEncoder passwordEncoder;
+    @Mock
+    private UserMapper userMapper;
 
     @InjectMocks
     private AuthenticationService authenticationService;
